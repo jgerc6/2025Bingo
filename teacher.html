@@ -6,6 +6,7 @@
         body { font-family: Arial; text-align: center; }
         .word { display: inline-block; margin: 10px; padding: 10px; border: 1px solid #ccc; cursor: pointer; }
         .called { background-color: #90ee90; }
+        button { margin: 10px; padding: 10px; font-size: 16px; }
     </style>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -14,6 +15,7 @@
 <body>
     <h1>Bingo Caller Screen</h1>
     <button onclick="callRandomWord()">Call Random Word</button>
+    <button onclick="resetGame()" style="background-color:red;color:white;">Reset Game</button>
     <div id="wordList"></div>
 
     <script>
@@ -48,6 +50,14 @@
                     alert('All words have been called!');
                 }
             });
+        }
+
+        function resetGame() {
+            if (confirm('Are you sure you want to reset the game?')) {
+                db.ref('calledWords').set([]);
+                db.ref('players').set({});
+                alert('Game has been reset!');
+            }
         }
     </script>
 </body>
