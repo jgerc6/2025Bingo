@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bingo Player</title>
+    <style>
+        body { font-family: Arial; text-align: center; }
+        table { margin: auto; border-collapse: collapse; }
+        td { width: 100px; height: 100px; border: 1px solid #ccc; text-align: center; vertical-align: middle; font-size: 18px; }
+        .marked { background-color: #90ee90; }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="firebase-config.js"></script>
+</head>
+<body>
+    <h1>Your Bingo Board</h1>
+    <input type="text" id="playerId" placeholder="Enter your name or ID" />
+    <button onclick="loadBoard()">Load Board</button>
+    <table id="board"></table>
+    <h2 id="status"></h2>
+
+    <script>
+        const words = ['Lucas', 'Cohen', 'Lockey', 'Noah', 'Marcus', 'Seth', 'Summer-Jane', 'Kelsey', 'Kelly', 'Abay', 'Imarni', 'Liam', 'Tylah', 'Isabella', 'Jazmine', 'Evi', 'Dylan', 'Addison', 'Sebastian', 'Kudrat', 'Miley', 'Israel', 'Joel', 'Jaxson', 'Mikayla', 'Grace', 'John', 'Piper', 'Harrison', 'Kody', 'Braithan'];
+        const db = firebase.database();
+        let board = [];
+
+        function renderBoard() {
+            const table = document.getElementById('board');
+            table.innerHTML = '';
+            board.forEach(row => {
+                const tr = document.createElement('tr');
+                row.forEach(word => {
+                    const td = document.createElement('td');
+                    td.textContent = word;
+                    tr.appendChild(td);
+                });
+                table.appendChild(tr);
+            });
+        }
+
+        function generateBoard() {
+            const shuffled = words.sort(() => 0.5 - Math.random()).slice(0, 16);
+            board = [];
+            for (let i = 0; i < 4; i++) {
+                board.push(shuffled.slice(i * 4, i * 4 + 4));
+            }
+        }
+
+        function loadBoard() {
+            const playerId = document.getElementById('playerId').value.trim();
+            if (!playerId) { alert('Please enter your name or ID'); return; }
+            db.ref('players/' + playerId).once('value').then(snapshot => {
+                if (snapshot.exists()) {
+                    board = snapshot.val();
+                } else {
+                    generateBoard();
+                    db.ref('players/' + playerId).set(board);
+                }
+                renderBoard();
+            });
+        }
+
+        function checkBingo() {
+            const cells = document.querySelectorAll('td');
+            const marked = Array.from(cells).map(c => c.classList.contains('marked'));
+            const grid = [];
+            for (let i = 0; i < 4; i++) grid.push(marked.slice(i * 4, i * 4 + 4));
+
+            for (let i = 0; i < 4; i++) {
+                if (grid[i].every(Boolean) || grid.map(r => r[i]).every(Boolean)) return true;
+            }
+            if ([0,1,2,3].every(i => grid[i][i]) || [0,1,2,3].every(i => grid[i][3-i])) return true;
+            return false;
+        }
+
+        db.ref('calledWords').on('value', snapshot => {
+            const calledWords = snapshot.val() || [];
+            document.querySelectorAll('td').forEach(td => {
+                if (calledWords.includes(td.textContent)) td.classList.add('marked');
+            });
+            if (checkBingo()) document.getElementById('status').textContent = 'BINGO!';
+        });
+    </script>
+</body>
+</html>

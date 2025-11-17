@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bingo Caller</title>
+    <style>
+        body { font-family: Arial; text-align: center; }
+        .word { display: inline-block; margin: 10px; padding: 10px; border: 1px solid #ccc; cursor: pointer; }
+        .called { background-color: #90ee90; }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="firebase-config.js"></script>
+</head>
+<body>
+    <h1>Bingo Caller Screen</h1>
+    <button onclick="callRandomWord()">Call Random Word</button>
+    <div id="wordList"></div>
+
+    <script>
+        const words = ['Lucas', 'Cohen', 'Lockey', 'Noah', 'Marcus', 'Seth', 'Summer-Jane', 'Kelsey', 'Kelly', 'Abay', 'Imarni', 'Liam', 'Tylah', 'Isabella', 'Jazmine', 'Evi', 'Dylan', 'Addison', 'Sebastian', 'Kudrat', 'Miley', 'Israel', 'Joel', 'Jaxson', 'Mikayla', 'Grace', 'John', 'Piper', 'Harrison', 'Kody', 'Braithan'];
+        const db = firebase.database();
+
+        function renderWords(calledWords) {
+            const container = document.getElementById('wordList');
+            container.innerHTML = '';
+            words.forEach(word => {
+                const div = document.createElement('div');
+                div.className = 'word' + (calledWords.includes(word) ? ' called' : '');
+                div.textContent = word;
+                container.appendChild(div);
+            });
+        }
+
+        db.ref('calledWords').on('value', snapshot => {
+            const calledWords = snapshot.val() || [];
+            renderWords(calledWords);
+        });
+
+        function callRandomWord() {
+            db.ref('calledWords').once('value').then(snapshot => {
+                const calledWords = snapshot.val() || [];
+                const remaining = words.filter(w => !calledWords.includes(w));
+                if (remaining.length > 0) {
+                    const nextWord = remaining[Math.floor(Math.random() * remaining.length)];
+                    calledWords.push(nextWord);
+                    db.ref('calledWords').set(calledWords);
+                } else {
+                    alert('All words have been called!');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
